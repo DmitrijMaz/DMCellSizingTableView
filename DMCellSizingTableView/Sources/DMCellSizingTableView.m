@@ -333,7 +333,7 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     [super moveSection:section toSection:newSection];
 }
 
-#pragma mark - Size Calculations
+#pragma mark - Private 
 
 - (NSNumber *)getCachedHeightForStorageKey:(id<NSCopying>)storageKey parentStorageKey:(id<NSCopying>)parentStorageKey
 {
@@ -388,7 +388,7 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     return reusableView;
 }
 
-- (CGFloat)heightForView:(UIView *)view withMinimumHeight:(CGFloat)minimumHeight
+- (CGFloat)heightForView:(UIView *)view withMinimumHeight:(CGFloat)minimumHeight addtionalHeight:(CGFloat)additionalHeight
 {
     UIView *sizingView = nil;
     
@@ -406,7 +406,8 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     
     CGSize size = [sizingView systemLayoutSizeFittingSize:UILayoutFittingCompressedSize];
     
-    size.height = MAX(ceil(size.height + 1.f), minimumHeight);
+    size.height     = MAX(ceil(size.height + 1.f), minimumHeight);
+    size.height     += additionalHeight;
     
     return size.height;
 }
@@ -424,21 +425,21 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     }
     else
     {
-        [self logWarningWithMessage:@"You have not specified configure block. Cell may not be populated with content."];
+        [self logWarningWithMessage:@"You have not specified configure block. View may not be populated with content."];
     }
     
-    CGFloat height = [self heightForView:reuseView withMinimumHeight:minimumHeight];
-    
-    height += additionalHeight;
+    CGFloat height = [self heightForView:reuseView withMinimumHeight:minimumHeight addtionalHeight:additionalHeight];
     
     return height;
 }
 
-- (CGFloat)heightForViewWithIdentifier:(NSString *)cellIdentifier
+- (CGFloat)heightForViewWithIdentifier:(NSString *)identifier
                         configureBlock:(DMTableViewConfigureBlock)configureBlock
                          minimumHeight:(CGFloat)minimumHeight
+                      additionalHeight:(CGFloat)additionalHeight
+                            storageKey:(id<NSCopying>)storageKey
 {
-    return [self heightForViewWithIdentifier:cellIdentifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:0.f];
+    return [self heightForViewWithIdentifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight storageKey:storageKey parentStorageKey:nil];
 }
 
 - (CGFloat)heightForViewWithIdentifier:(NSString *)identifier
@@ -473,30 +474,69 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     return height;
 }
 
-- (CGFloat)heightForViewWithIdentifier:(NSString *)identifier
-                        configureBlock:(DMTableViewConfigureBlock)configureBlock
-                         minimumHeight:(CGFloat)minimumHeight
-                      additionalHeight:(CGFloat)additionalHeight
-                            storageKey:(id<NSCopying>)storageKey
-{
-    return [self heightForViewWithIdentifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight storageKey:storageKey parentStorageKey:nil];
-}
-
 #pragma mark - Cell
 
-- (CGFloat)heightForCellAtIndexPath:(NSIndexPath *)indexPath
-                         identifier:(NSString *)identifier
-                     configureBlock:(DMTableViewConfigureBlock)configureBlock
-                      minimumHeight:(CGFloat)minimumHeight
+- (CGFloat)minimumHeightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return [self heightForCellAtIndexPath:indexPath identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:0.f];
+    CGFloat minimumHeight = 0.f;
+    
+    if ( [self.delegate respondsToSelector:@selector(tableView:minimumHeightForRowAtIndexPath:)] )
+    {
+        minimumHeight = [(id <DMCellSizingTableViewDelegate>)self.delegate tableView:self
+                                                      minimumHeightForRowAtIndexPath:indexPath];
+    }
+    
+    return minimumHeight;
 }
 
-- (CGFloat)heightForCellAtIndexPath:(NSIndexPath *)indexPath
-                         identifier:(NSString *)identifier
-                     configureBlock:(DMTableViewConfigureBlock)configureBlock
-                      minimumHeight:(CGFloat)minimumHeight
-                   additionalHeight:(CGFloat)additionalHeight
+- (CGFloat)additionalHeightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    CGFloat additionalHeight = 0.f;
+    
+    if ( [self.delegate respondsToSelector:@selector(tableView:additionalHeightForRowAtIndexPath:)] )
+    {
+        additionalHeight = [(id <DMCellSizingTableViewDelegate>)self.delegate tableView:self
+                                                      additionalHeightForRowAtIndexPath:indexPath];
+    }
+    
+    return additionalHeight;
+}
+
+- (CGFloat)heightForRowAtIndexPath:(NSIndexPath *)indexPath
+                        identifier:(NSString *)identifier
+                    configureBlock:(DMTableViewConfigureBlock)configureBlock
+{
+    CGFloat minimumHeight       = [self minimumHeightForRowAtIndexPath:indexPath];
+    CGFloat additionalHeight    = [self additionalHeightForRowAtIndexPath:indexPath];
+    
+    return [self heightForRowAtIndexPath:indexPath identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
+}
+
+- (CGFloat)heightForRowAtIndexPath:(NSIndexPath *)indexPath
+                        identifier:(NSString *)identifier
+                    configureBlock:(DMTableViewConfigureBlock)configureBlock
+                  additionalHeight:(CGFloat)additionalHeight
+{
+    CGFloat minimumHeight       = [self minimumHeightForRowAtIndexPath:indexPath];
+    
+    return [self heightForRowAtIndexPath:indexPath identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
+}
+
+- (CGFloat)heightForRowAtIndexPath:(NSIndexPath *)indexPath
+                        identifier:(NSString *)identifier
+                    configureBlock:(DMTableViewConfigureBlock)configureBlock
+                     minimumHeight:(CGFloat)minimumHeight
+{
+    CGFloat additionalHeight    = [self additionalHeightForRowAtIndexPath:indexPath];
+    
+    return [self heightForRowAtIndexPath:indexPath identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
+}
+
+- (CGFloat)heightForRowAtIndexPath:(NSIndexPath *)indexPath
+                        identifier:(NSString *)identifier
+                    configureBlock:(DMTableViewConfigureBlock)configureBlock
+                     minimumHeight:(CGFloat)minimumHeight
+                  additionalHeight:(CGFloat)additionalHeight
 {
     NSNumber *storageKey = @(indexPath.row);
     
@@ -511,13 +551,61 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     return [NSString stringWithFormat:@"header_%ld", (long)section];
 }
 
+- (CGFloat)minimumHeightForHeaderInSection:(NSInteger)section
+{
+    CGFloat minimumHeight = 0.f;
+    
+    if ( [self.delegate respondsToSelector:@selector(tableView:minimumHeightForHeaderInSection:)] )
+    {
+        minimumHeight = [(id <DMCellSizingTableViewDelegate>)self.delegate tableView:self
+                                                     minimumHeightForHeaderInSection:section];
+    }
+    
+    return minimumHeight;
+}
+
+- (CGFloat)additionalHeightForHeaderInSection:(NSInteger)section
+{
+    CGFloat additionalHeight = 0.f;
+    
+    if ( [self.delegate respondsToSelector:@selector(tableView:additionalHeightForHeaderInSection:)] )
+    {
+        additionalHeight = [(id <DMCellSizingTableViewDelegate>)self.delegate tableView:self
+                                                     additionalHeightForHeaderInSection:section];
+    }
+    
+    return additionalHeight;
+}
+
+- (CGFloat)heightForHeaderInSection:(NSInteger)section
+                         identifier:(NSString *)identifier
+                     configureBlock:(DMTableViewConfigureBlock)configureBlock
+{
+    CGFloat minimumHeight       = [self minimumHeightForHeaderInSection:section];
+    CGFloat additionalHeight    = [self additionalHeightForHeaderInSection:section];
+    
+    return [self heightForHeaderInSection:section identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
+}
+
+
 - (CGFloat)heightForHeaderInSection:(NSInteger)section
                          identifier:(NSString *)identifier
                      configureBlock:(DMTableViewConfigureBlock)configureBlock
                       minimumHeight:(CGFloat)minimumHeight
 {
+    CGFloat additionalHeight = [self additionalHeightForFooterInSection:section];
     
-    return [self heightForHeaderInSection:section identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:0.f];
+    return [self heightForHeaderInSection:section identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
+}
+
+- (CGFloat)heightForHeaderInSection:(NSInteger)section
+                         identifier:(NSString *)identifier
+                     configureBlock:(DMTableViewConfigureBlock)configureBlock
+                   additionalHeight:(CGFloat)additionalHeight
+{
+    CGFloat minimumHeight = [self minimumHeightForFooterInSection:section];
+    
+    return [self heightForHeaderInSection:section identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
 }
 
 - (CGFloat)heightForHeaderInSection:(NSInteger)section
@@ -539,13 +627,61 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     return [NSString stringWithFormat:@"footer_%ld", (long)section];
 }
 
+- (CGFloat)minimumHeightForFooterInSection:(NSInteger)section
+{
+    CGFloat minimumHeight = 0.f;
+    
+    if ( [self.delegate respondsToSelector:@selector(tableView:minimumHeightForFooterInSection:)] )
+    {
+        minimumHeight = [(id <DMCellSizingTableViewDelegate>)self.delegate tableView:self
+                                                     minimumHeightForFooterInSection:section];
+    }
+    
+    return minimumHeight;
+}
+
+- (CGFloat)additionalHeightForFooterInSection:(NSInteger)section
+{
+    CGFloat additionalHeight = 0.f;
+    
+    if ( [self.delegate respondsToSelector:@selector(tableView:additionalHeightForFooterInSection:)] )
+    {
+        additionalHeight = [(id <DMCellSizingTableViewDelegate>)self.delegate tableView:self
+                                                     additionalHeightForFooterInSection:section];
+    }
+    
+    return additionalHeight;
+}
+
+- (CGFloat)heightForFooterInSection:(NSInteger)section
+                         identifier:(NSString *)identifier
+                     configureBlock:(DMTableViewConfigureBlock)configureBlock
+{
+    CGFloat minimumHeight = [self minimumHeightForFooterInSection:section];
+    CGFloat additionalHeight = [self additionalHeightForFooterInSection:section];
+    
+    return [self heightForFooterInSection:section identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
+}
+
+
 - (CGFloat)heightForFooterInSection:(NSInteger)section
                          identifier:(NSString *)identifier
                      configureBlock:(DMTableViewConfigureBlock)configureBlock
                       minimumHeight:(CGFloat)minimumHeight
 {
+    CGFloat additionalHeight = [self additionalHeightForFooterInSection:section];
     
-    return [self heightForFooterInSection:section identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:0.f];
+    return [self heightForFooterInSection:section identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
+}
+
+- (CGFloat)heightForFooterInSection:(NSInteger)section
+                         identifier:(NSString *)identifier
+                     configureBlock:(DMTableViewConfigureBlock)configureBlock
+                   additionalHeight:(CGFloat)additionalHeight
+{
+    CGFloat minimumHeight = [self minimumHeightForFooterInSection:section];
+    
+    return [self heightForFooterInSection:section identifier:identifier configureBlock:configureBlock minimumHeight:minimumHeight additionalHeight:additionalHeight];
 }
 
 - (CGFloat)heightForFooterInSection:(NSInteger)section

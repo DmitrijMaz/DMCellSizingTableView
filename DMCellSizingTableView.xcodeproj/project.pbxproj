@@ -15,6 +15,7 @@
 		939DC0C41A694BF300A2B297 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 939DC0C21A694BF300A2B297 /* LaunchScreen.xib */; };
 		939DC0D01A694BF300A2B297 /* DMCellSizingTableViewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 939DC0CF1A694BF300A2B297 /* DMCellSizingTableViewTests.m */; };
 		939DC0DC1A694C3900A2B297 /* DMCellSizingTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 939DC0DB1A694C3900A2B297 /* DMCellSizingTableView.m */; };
+		939DC0DE1A694F2500A2B297 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 939DC0DD1A694F2500A2B297 /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,6 +44,7 @@
 		939DC0CF1A694BF300A2B297 /* DMCellSizingTableViewTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DMCellSizingTableViewTests.m; sourceTree = "<group>"; };
 		939DC0DA1A694C3900A2B297 /* DMCellSizingTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DMCellSizingTableView.h; sourceTree = "<group>"; };
 		939DC0DB1A694C3900A2B297 /* DMCellSizingTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DMCellSizingTableView.m; sourceTree = "<group>"; };
+		939DC0DD1A694F2500A2B297 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +94,7 @@
 				939DC0BD1A694BF300A2B297 /* Main.storyboard */,
 				939DC0C01A694BF300A2B297 /* Images.xcassets */,
 				939DC0C21A694BF300A2B297 /* LaunchScreen.xib */,
+				939DC0DD1A694F2500A2B297 /* README.md */,
 				939DC0B31A694BF300A2B297 /* Supporting Files */,
 			);
 			path = DMCellSizingTableView;
@@ -234,6 +237,7 @@
 			files = (
 				939DC0DC1A694C3900A2B297 /* DMCellSizingTableView.m in Sources */,
 				939DC0BC1A694BF300A2B297 /* ViewController.m in Sources */,
+				939DC0DE1A694F2500A2B297 /* README.md in Sources */,
 				939DC0B91A694BF300A2B297 /* AppDelegate.m in Sources */,
 				939DC0B61A694BF300A2B297 /* main.m in Sources */,
 			);
