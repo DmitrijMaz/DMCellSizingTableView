@@ -71,6 +71,11 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
 
 - (void)logWithErrorType:(ErrorLevel)level format:(NSString *)format arguments:(va_list)argList
 {
+    if ( !self.loggingEnabled )
+    {
+        return;
+    }
+    
     NSString *formattedMessage = format;
     
     if ( argList )
@@ -94,7 +99,7 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     }
 }
 
-- (void)logWithErrorType:(ErrorLevel)level message:(NSString *)format, ...
+- (void)logWithErrorType:(ErrorLevel)level message:(NSString *)format, ... NS_FORMAT_FUNCTION(2,3)
 {
     va_list args;
     va_start(args, format);
@@ -104,7 +109,7 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     va_end(args);
 }
 
-- (void)logErrorWithMesage:(NSString *)format, ...
+- (void)logErrorWithMesage:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2)
 {
     va_list args;
     va_start(args, format);
@@ -114,7 +119,7 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     va_end(args);
 }
 
-- (void)logInfoWithMessage:(NSString *)format, ...
+- (void)logInfoWithMessage:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2)
 {
     va_list args;
     va_start(args, format);
@@ -124,7 +129,7 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     va_end(args);
 }
 
-- (void)logWarningWithMessage:(NSString *)format, ...
+- (void)logWarningWithMessage:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2)
 {
     va_list args;
     va_start(args, format);
@@ -307,7 +312,7 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
 {
     [self deleteCacheForSections:sections];
     
-    [self reloadSections:sections withRowAnimation:animation];
+    [super reloadSections:sections withRowAnimation:animation];
 }
 
 - (void)deleteSections:(NSIndexSet *)sections withRowAnimation:(UITableViewRowAnimation)animation
@@ -370,8 +375,6 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     {
         [self.heightCache setObject:@(height) forKey:storageKey];
     }
-    
-    [self logInfoWithMessage:@"Heights updated %@", self.heightCache];
 }
 
 - (id)sizingViewWithIdentifier:(NSString *)identifier
@@ -468,7 +471,7 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     else
     {
         [self storeHeight:height forKey:storageKey parentStorageKey:parentStorageKey];
-        [self logInfoWithMessage:@"%@ Height for row %@ is %f", storageKey, height];
+        [self logInfoWithMessage:@"Height for row %@ is %f", storageKey, height];
     }
     
     return height;
@@ -734,6 +737,18 @@ typedef NS_ENUM(NSInteger, ErrorLevel) {
     
     return size;
 #endif
+}
+
+
+#pragma mark - NSObject
+
+- (NSString *)debugDescription
+{
+    NSString *description = [super description];
+    
+    description = [description stringByAppendingFormat:@"\nHeight Cache - %@\nView Cache - %@", self.heightCache, self.viewCache];
+    
+    return description;
 }
 
 

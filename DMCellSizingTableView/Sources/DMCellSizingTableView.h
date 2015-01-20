@@ -27,6 +27,11 @@ typedef void (^DMTableViewConfigureBlock)(id viewToConfigure);
 @interface DMCellSizingTableView : UITableView
 
 /**
+ *  Set this property to YES to display height changes, errors and warnings.
+ */
+@property (nonatomic, assign) BOOL loggingEnabled;
+
+/**
  *  Set this property to YES in order to return tableview's contentSize in intrinsicContentSize.
  */
 @property (nonatomic, assign) BOOL autosizesToFitContent;
